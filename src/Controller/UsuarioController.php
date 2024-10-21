@@ -132,7 +132,7 @@ class UsuarioController extends AbstractController
     }
 
     //para hacer la relacion entre usuario y curso
-    #[Route('/usuarioCurso/anadir', name: 'anadir_usuario_curso', methods: ['PUT'])]
+    #[Route('/usuarioCurso/anadir', name: 'anadir_usuario_curso', methods: ['POST'])]
     public function setUsuarioCurso(UsuarioCursoRepository $usuarioCursoRepository, CursoRepository $cursoRepository, UsuarioRepository $usuarioRepository,Request $request):JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -189,17 +189,73 @@ class UsuarioController extends AbstractController
             return $this->json(['error' => 'Usuario no encontrado']);
         }  
 
+        $idUsuario = $usuN->getId();
         $nombre = $usuN->getNombre();
         $password = $usuN->getcontrasena();
+        $esRoot = $usuN->isRoot();
+        
         
         if($password == $data['contrasena']){
-            return $this->json(['message' => 'Bienvenido ', 'Usuario' => $nombre], JsonResponse::HTTP_OK);
+            return $this->json(['status' => 'success',
+                                'message' => 'Bienvenido ',
+                                'Usuario' => $nombre,
+                                'user_id' => $idUsuario,
+                                'role' => $esRoot ? 'root' : 'user'],
+                                JsonResponse::HTTP_OK);
 
         }
         
         return $this->json(['message' => 'Usuario o contraseña incorrecta '], JsonResponse::HTTP_UNAUTHORIZED);
 
     }
+
+    #[Route('/usuario/rol', name: 'rol_usuario', methods: ['GET'])]
+    public function verificarRolUsuario(UsuarioRepository $usuarioRepository, Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (empty($nombre)) {
+            return $this->json(['error' => 'Nombre de usuario no proporcionado'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+    
+        $usuario = $usuarioRepository->findOneBy(['nombre' => $nombre]);
+    
+        if (empty($usuario)) {
+            return $this->json(['error' => 'Usuario no encontrado'], JsonResponse::HTTP_NOT_FOUND);
+        }
+    
+        $esRoot = $usuario->getRoot();
+
+        return $this->json(['esRoot' => $esRoot], JsonResponse::HTTP_OK);
+    }
+
+    //funciona y devuelve la nota del curso q se especifique y el usuario q se especifique
+    //implementar en el front
+    #[Route('/curso/{cursoId}/usuario/{userId}/nota', name: 'get_nota_usuario', methods: ['GET'])]
+    public function getNotaUsuario(UsuarioCursoRepository $usuarioCursoRepository ,string $cursoId, string $userId): JsonResponse
+    {
+        $nota = $usuarioCursoRepository->findNotaByCursoAndUsuario($cursoId, $userId);
+
+        if ($nota === null) {
+            return new JsonResponse(['error' => 'Nota no encontrada'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse(['nota' => $nota], JsonResponse::HTTP_OK);
+    }
+
+    //COMPROBAR*************************************************
+    #[Route('/curso/{cursoId}/usuarios', name: 'get_usuarios_matriculados', methods: ['GET'])]
+    public function getUsuariosMatriculados(int $cursoId): JsonResponse
+    {
+        $usuarios = $this->usuarioCursoRepository->findUsuariosByCurso($cursoId);
+
+        if (empty($usuarios)) {
+            return new JsonResponse(['error' => 'No hay usuarios matriculados en este curso'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse($usuarios, JsonResponse::HTTP_OK);
+    }
+
 
     private function convertToJson($data):JsonResponse
     {
