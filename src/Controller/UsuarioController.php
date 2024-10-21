@@ -39,14 +39,14 @@ class UsuarioController extends AbstractController
         
         $data = json_decode($request->getContent(), true);
 
-        if (empty($data['nombre']) || empty($data['apellido1']) || empty($data['contraseña'])) {
+        if (empty($data['nombre']) || empty($data['apellido1']) || empty($data['contrasena'])) {
             return $this->json(['error' => 'Datos incompletos'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         $usuario = new Usuario();
         $usuario->setNombre($data['nombre']);
         $usuario->setApellido1($data['apellido1']);
-        $usuario->setContraseña($data['contraseña']);
+        $usuario->setcontrasena($data['contrasena']);
         $usuario->setRoot($data['root']);
 
 
@@ -69,6 +69,34 @@ class UsuarioController extends AbstractController
         $usuarioRepository->delete($usuario);
 
         return $this->json(['message' => 'Usuario eliminado'], JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/usuario/actualizar/{id}', name: 'actualizar_usuario', methods: ['PUT'])]
+    public function actualizarUsuario(UsuarioRepository $usuarioRepository, Request $request, int $id): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        if (empty($data['nombre']) || empty($data['apellido1']) || empty($data['contrasena'])) {
+            return $this->json(['error' => 'Datos incompletos'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $usuario = $usuarioRepository->find($id);
+
+        if (empty($usuario)) {
+            return $this->json(['error' => 'Usuario no encontrado'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $usuario->setNombre($data['nombre']);
+        $usuario->setApellido1($data['apellido1']);
+        $usuario->setcontrasena($data['contrasena']);
+
+        /*if (isset($data['root'])) {
+            $usuario->setRoot($data['root']);
+        }*/
+
+        $usuarioRepository->add($usuario, true);
+
+        return $this->json(['message' => 'Usuario actualizado'], JsonResponse::HTTP_OK);
     }
 
 
@@ -104,7 +132,7 @@ class UsuarioController extends AbstractController
     }
 
     //para hacer la relacion entre usuario y curso
-    #[Route('/usuarioCurso/anadir', name: 'anadir_usuario_curso', methods: ['POST'])]
+    #[Route('/usuarioCurso/anadir', name: 'anadir_usuario_curso', methods: ['PUT'])]
     public function setUsuarioCurso(UsuarioCursoRepository $usuarioCursoRepository, CursoRepository $cursoRepository, UsuarioRepository $usuarioRepository,Request $request):JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -112,13 +140,18 @@ class UsuarioController extends AbstractController
         $idCurso = $cursoRepository->find($data['id_curso']);
         $idUsuario = $usuarioRepository->find($data['id_usuario']);
 
+        if(empty($idCurso) || empty($idUsuario)){
+            return $this->json(['error' => 'Datos incompletos'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
         //recoger el id del usuario y el id del curso para cuando haga el alta poder hacer la relación
-        $ids = new UsuarioCurso($idUsuario, $idCurso, $data['nota']);
+        $ids = new UsuarioCurso($idUsuario, $idCurso);
 
         $usuarioCursoRepository->add($ids);
-
+      
         return $this->json(['message' => 'Relacion insertada'], JsonResponse::HTTP_CREATED);
     }
+
 
     #[Route('/usuarioCurso/eliminar/{id}', name: 'eliminar_usuario_curso', methods: ['DELETE'])]
     public function eliminarUsuarioCurso(UsuarioCursoRepository $usuarioCursoRepository, int $id):JsonResponse
@@ -141,8 +174,12 @@ class UsuarioController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         //validar los datos
-        if (empty($data['nombre']) || empty($data['contraseña'])) {
-            return $this->json(['error' => 'Datos incompletos'], JsonResponse::HTTP_BAD_REQUEST);
+        if (empty($data['nombre'])) {
+            return $this->json(['error' => 'Usuario incorrecto'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        if (empty($data['contrasena'])) {
+            return $this->json(['error' => 'Contraseña incorrecta'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
         //buscar el usuario por nombre
@@ -153,14 +190,14 @@ class UsuarioController extends AbstractController
         }  
 
         $nombre = $usuN->getNombre();
-        $password = $usuN->getContraseña();
+        $password = $usuN->getcontrasena();
         
-        if($password == $data['contraseña']){
+        if($password == $data['contrasena']){
             return $this->json(['message' => 'Bienvenido ', 'Usuario' => $nombre], JsonResponse::HTTP_OK);
 
         }
         
-        return $this->json(['message' => 'Usuario o contrasena incorrecta '], JsonResponse::HTTP_UNAUTHORIZED);
+        return $this->json(['message' => 'Usuario o contraseña incorrecta '], JsonResponse::HTTP_UNAUTHORIZED);
 
     }
 

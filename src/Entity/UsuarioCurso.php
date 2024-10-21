@@ -27,11 +27,11 @@ class UsuarioCurso
      * @param float|null $nota
      * @param Curso|null $id_curso
      */
-    public function __construct(?Usuario $id_usuario, ?Curso $id_curso, ?float $nota)
-    {
+
+    public function __construct(?Usuario $id_usuario, ?Curso $id_curso){
         $this->id_usuario = $id_usuario;
         $this->id_curso = $id_curso;
-        $this->nota = $nota;
+        
     }
 
     public function getId(): ?int
