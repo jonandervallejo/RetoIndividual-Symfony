@@ -231,7 +231,7 @@ class UsuarioController extends AbstractController
 
     //funciona y devuelve la nota del curso q se especifique y el usuario q se especifique
     //implementar en el front
-    #[Route('/curso/{cursoId}/usuario/{userId}/nota', name: 'get_nota_usuario', methods: ['GET'])]
+    #[Route('/curso/{cursoId}/nota/{userId}', name: 'get_nota_usuario', methods: ['GET'])]
     public function getNotaUsuario(UsuarioCursoRepository $usuarioCursoRepository ,string $cursoId, string $userId): JsonResponse
     {
         $nota = $usuarioCursoRepository->findNotaByCursoAndUsuario($cursoId, $userId);
@@ -245,9 +245,9 @@ class UsuarioController extends AbstractController
 
     //COMPROBAR*************************************************
     #[Route('/curso/{cursoId}/usuarios', name: 'get_usuarios_matriculados', methods: ['GET'])]
-    public function getUsuariosMatriculados(int $cursoId): JsonResponse
+    public function getUsuariosMatriculados(UsuarioCursoRepository $usuarioCursoRepository, int $cursoId): JsonResponse
     {
-        $usuarios = $this->usuarioCursoRepository->findUsuariosByCurso($cursoId);
+        $usuarios = $usuarioCursoRepository->findUsuariosByCurso($cursoId);
 
         if (empty($usuarios)) {
             return new JsonResponse(['error' => 'No hay usuarios matriculados en este curso'], JsonResponse::HTTP_NOT_FOUND);
